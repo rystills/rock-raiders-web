@@ -1,4 +1,4 @@
-import { clearIntervalSafe } from '../core/Util'
+import { PausableInterval, setPausableInterval } from '../core/PausableInterval'
 import { EventBus } from '../event/EventBus'
 import { EventKey } from '../event/EventKeyEnum'
 import { JobCreateEvent, JobDeleteEvent } from '../event/WorldEvents'
@@ -22,8 +22,8 @@ export class Supervisor {
     sceneMgr: SceneManager
     entityMgr: EntityManager
     jobs: ShareableJob[] = []
-    assignInterval = null
-    checkRubbleInterval = null
+    assignInterval: PausableInterval = null
+    checkRubbleInterval: PausableInterval = null
     priorityIndexList: PriorityIdentifier[] = []
     priorityList: PriorityEntry[] = []
 
@@ -36,17 +36,25 @@ export class Supervisor {
         EventBus.registerEventListener(EventKey.JOB_DELETE, (event: JobDeleteEvent) => {
             event.job.cancel()
         })
+        EventBus.registerEventListener(EventKey.PAUSE_GAME, () => {
+            this.assignInterval?.pause()
+            this.checkRubbleInterval?.pause()
+        })
+        EventBus.registerEventListener(EventKey.UNPAUSE_GAME, () => {
+            this.assignInterval?.unPause()
+            this.checkRubbleInterval?.unPause()
+        })
     }
 
     start() {
         stop()
-        this.assignInterval = setInterval(this.assignJobs.bind(this), JOB_SCHEDULE_INTERVAL)
-        this.checkRubbleInterval = setInterval(this.checkUnclearedRubble.bind(this), CHECK_CLEAR_RUBBLE_INTERVAL)
+        this.assignInterval = setPausableInterval(this.assignJobs.bind(this), JOB_SCHEDULE_INTERVAL)
+        this.checkRubbleInterval = setPausableInterval(this.checkUnclearedRubble.bind(this), CHECK_CLEAR_RUBBLE_INTERVAL)
     }
 
     stop() {
-        this.assignInterval = clearIntervalSafe(this.assignInterval)
-        this.checkRubbleInterval = clearIntervalSafe(this.checkRubbleInterval)
+        this.assignInterval?.pause()
+        this.checkRubbleInterval?.pause()
     }
 
     assignJobs() {

@@ -1,5 +1,5 @@
 import { Group, PositionalAudio } from 'three'
-import { clearTimeoutSafe } from '../../../core/Util'
+import { PausableTimeout, setPausableTimeout } from '../../../core/PausableTimeout'
 import { SceneMesh } from '../../../scene/SceneMesh'
 import { SequenceTextureMaterial } from '../../../scene/SequenceTextureMaterial'
 import { AnimSubObj } from './AnimSubObj'
@@ -21,7 +21,7 @@ export class AnimClip {
     driverJoint: SceneMesh = null
     nullJoints: Map<string, SceneMesh[]> = new Map()
     polyModel: Group = new Group()
-    animationTimeout = null
+    animationTimeout: PausableTimeout = null
     sfxAudioByFrame: Map<number, PositionalAudio[]> = new Map()
 
     animate(frameIndex: number, onAnimationDone: () => any, durationTimeMs: number) {
@@ -41,7 +41,7 @@ export class AnimClip {
             }
         })
         this.playAudio(frameIndex)
-        this.animationTimeout = clearTimeoutSafe(this.animationTimeout)
+        this.animationTimeout?.pause()
         let nextFrame = frameIndex + 1
         if (nextFrame <= this.lastFrame || !onAnimationDone || (durationTimeMs !== null && durationTimeMs > 0)) {
             if (nextFrame > this.lastFrame) {
@@ -51,16 +51,11 @@ export class AnimClip {
             if (durationTimeMs !== null) durationTimeMs -= standardDurationTimeMs
             const that = this
             const timeoutTimeMs = durationTimeMs !== null ? Math.max(0, Math.min(durationTimeMs, standardDurationTimeMs)) : standardDurationTimeMs
-            this.animationTimeout = setTimeout(() => that.animate(nextFrame, onAnimationDone, durationTimeMs), timeoutTimeMs)
+            this.animationTimeout = setPausableTimeout(() => that.animate(nextFrame, onAnimationDone, durationTimeMs), timeoutTimeMs)
         } else if (onAnimationDone) {
             this.stopAudio()
             onAnimationDone()
         }
-    }
-
-    stop() {
-        this.animationTimeout = clearTimeoutSafe(this.animationTimeout)
-        this.stopAudio()
     }
 
     private playAudio(frameIndex: number) {
@@ -72,6 +67,21 @@ export class AnimClip {
 
     private stopAudio() {
         this.sfxAudioByFrame.forEach((f) => f.forEach((a) => a.isPlaying && a.stop()))
+    }
+
+    stop() {
+        this.animationTimeout?.pause()
+        this.stopAudio()
+    }
+
+    pause() {
+        this.animationTimeout?.pause()
+        this.polyList?.forEach((p) => p.getMaterials().forEach((m) => m.sequenceInterval?.pause()))
+    }
+
+    unPause() {
+        this.animationTimeout?.unPause()
+        this.polyList?.forEach((p) => p.getMaterials().forEach((m) => m.sequenceInterval?.unPause()))
     }
 
 }

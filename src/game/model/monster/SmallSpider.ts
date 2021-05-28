@@ -1,6 +1,6 @@
 import { Vector2 } from 'three'
 import { getRandom, getRandomInclusive } from '../../../core/Util'
-import { NATIVE_FRAMERATE, TILESIZE } from '../../../params'
+import { TILESIZE } from '../../../params'
 import { ResourceManager } from '../../../resource/ResourceManager'
 import { EntityManager } from '../../EntityManager'
 import { SceneManager } from '../../SceneManager'
@@ -13,6 +13,7 @@ import { Monster } from './Monster'
 
 export class SmallSpider extends Monster {
 
+    idleTimer: number = 0
     radiusSq: number = 0
 
     constructor(sceneMgr: SceneManager, entityMgr: EntityManager) {
@@ -24,23 +25,17 @@ export class SmallSpider extends Monster {
         return ResourceManager.stats.SmallSpider
     }
 
-    startMoving() {
-        SmallSpider.onMove(this)
-    }
-
-    private static onMove(spider: SmallSpider) {
-        if (spider.target.length > 0 && spider.moveToClosestTarget(spider.target) === MoveState.MOVED) {
-            if (!spider.sceneMgr.terrain.getSurfaceFromWorld(spider.getPosition()).surfaceType.floor) {
-                spider.onDeath()
-            } else {
-                spider.moveTimeout = setTimeout(() => SmallSpider.onMove(spider), 1000 / NATIVE_FRAMERATE)
+    update(elapsedMs: number) {
+        this.idleTimer -= elapsedMs
+        if (this.idleTimer > 0) return
+        if (this.target.length > 0 && this.moveToClosestTarget(this.target) === MoveState.MOVED) { // TODO consider elapsed time when moving
+            if (!this.sceneMgr.terrain.getSurfaceFromWorld(this.getPosition()).surfaceType.floor) {
+                this.onDeath()
             }
         } else {
-            spider.changeActivity()
-            spider.moveTimeout = setTimeout(() => {
-                spider.target = [spider.findTarget()]
-                SmallSpider.onMove(spider)
-            }, 1000 + getRandom(9000))
+            this.changeActivity()
+            this.target = [this.findTarget()]
+            this.idleTimer = 1000 + getRandom(9000)
         }
     }
 

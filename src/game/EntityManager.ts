@@ -1,9 +1,10 @@
 import { Vector2, Vector3 } from 'three'
+import { PausableTimeout, setPausableTimeout } from '../core/PausableTimeout'
 import { EventBus } from '../event/EventBus'
 import { EventKey } from '../event/EventKeyEnum'
 import { SelectionChanged, SelectPanelType } from '../event/LocalEvents'
 import { JobCreateEvent } from '../event/WorldEvents'
-import { ADDITIONAL_RAIDER_PER_SUPPORT, MAX_RAIDER_BASE, TILESIZE } from '../params'
+import { ADDITIONAL_RAIDER_PER_SUPPORT, MAX_RAIDER_BASE, NATIVE_FRAMERATE, TILESIZE } from '../params'
 import { BaseEntity } from './model/BaseEntity'
 import { BuildingEntity } from './model/building/BuildingEntity'
 import { BuildingSite } from './model/building/BuildingSite'
@@ -20,6 +21,11 @@ import { VehicleEntity } from './model/vehicle/VehicleEntity'
 
 export class EntityManager {
 
+    private static readonly TARGET_INTERVAL_MS: number = 1000 / NATIVE_FRAMERATE
+
+    updateEntitiesTimeout: PausableTimeout = null
+    sleepForMs: number = null
+    elapsedGameTimeMs: number = 0
     selection: GameSelection = new GameSelection()
     buildings: BuildingEntity[] = []
     buildingsUndiscovered: BuildingEntity[] = []
@@ -39,9 +45,16 @@ export class EntityManager {
         EventBus.registerEventListener(EventKey.SELECTION_CHANGED, (event: SelectionChanged) => {
             if (event.selectPanelType === SelectPanelType.NONE) this.selection.deselectAll()
         })
+        EventBus.registerEventListener(EventKey.PAUSE_GAME, () => {
+            this.pause()
+        })
+        EventBus.registerEventListener(EventKey.UNPAUSE_GAME, () => {
+            this.unPause()
+        })
     }
 
     reset() {
+        this.elapsedGameTimeMs = 0
         this.selection = new GameSelection()
         this.buildings = []
         this.buildingsUndiscovered = []
@@ -58,17 +71,48 @@ export class EntityManager {
     }
 
     start() {
+        this.updateAllEntities()
+    }
+
+    updateAllEntities() {
+        const startUpdate = window.performance.now()
+        this.elapsedGameTimeMs += EntityManager.TARGET_INTERVAL_MS
+        this.forEachEntity((e) => e.update(EntityManager.TARGET_INTERVAL_MS))
+        const endUpdate = window.performance.now()
+        const updateDurationMs = endUpdate - startUpdate
+        this.sleepForMs = EntityManager.TARGET_INTERVAL_MS - Math.round(updateDurationMs)
+        this.updateEntitiesTimeout?.pause()
+        this.updateEntitiesTimeout = setPausableTimeout(this.updateAllEntities.bind(this), this.sleepForMs > 0 ? this.sleepForMs : 0)
     }
 
     stop() {
-        this.buildings.forEach((b) => b.removeFromScene())
-        this.buildingsUndiscovered.forEach((b) => b.removeFromScene())
-        this.raiders.forEach((r) => r.removeFromScene())
-        this.raidersUndiscovered.forEach((r) => r.removeFromScene())
-        this.materials.forEach((m) => m.removeFromScene())
-        this.materialsUndiscovered.forEach((m) => m.removeFromScene())
-        this.spiders.forEach((m) => m.removeFromScene())
-        this.bats.forEach((b) => b.removeFromScene())
+        this.updateEntitiesTimeout?.pause()
+        this.forEachEntity((e) => e.removeFromScene())
+        this.reset()
+    }
+
+    pause() {
+        this.updateEntitiesTimeout?.pause()
+        this.forEachEntity((e) => e.onPause())
+    }
+
+    unPause() {
+        this.forEachEntity((e) => e.onUnPause())
+        this.updateEntitiesTimeout?.unPause()
+    }
+
+    forEachEntity(callback: (e: BaseEntity) => any) {
+        this.buildings.forEach((b) => callback(b))
+        this.buildingsUndiscovered.forEach((b) => callback(b))
+        this.raiders.forEach((r) => callback(r))
+        this.raidersUndiscovered.forEach((r) => callback(r))
+        this.materials.forEach((m) => callback(m))
+        this.materialsUndiscovered.forEach((m) => callback(m))
+        this.spiders.forEach((m) => callback(m))
+        this.bats.forEach((b) => callback(b))
+        this.rockMonsters.forEach((r) => callback(r))
+        this.vehicles.forEach((v) => callback(v))
+        this.vehiclesUndiscovered.forEach((v) => callback(v))
     }
 
     getBuildingsByType(...buildingTypes: EntityType[]): BuildingEntity[] {

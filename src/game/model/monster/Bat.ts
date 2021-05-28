@@ -1,6 +1,6 @@
 import { Vector2 } from 'three'
 import { getRandomInclusive } from '../../../core/Util'
-import { NATIVE_FRAMERATE, TILESIZE } from '../../../params'
+import { TILESIZE } from '../../../params'
 import { ResourceManager } from '../../../resource/ResourceManager'
 import { EntityManager } from '../../EntityManager'
 import { SceneManager } from '../../SceneManager'
@@ -20,15 +20,10 @@ export class Bat extends Monster {
         return ResourceManager.stats.Bat
     }
 
-    startRandomMove() {
-        Bat.onMove(this)
-    }
-
-    private static onMove(bat: Bat) {
-        if (bat.target.length < 1 || bat.moveToClosestTarget(bat.target) === MoveState.TARGET_REACHED) {
-            bat.target = [bat.findTarget()]
+    update(elapsedMs: number) {
+        if (this.target.length < 1 || this.moveToClosestTarget(this.target) === MoveState.TARGET_REACHED) { // TODO consider elapsed time when moving
+            this.target = [this.findTarget()]
         }
-        bat.moveTimeout = setTimeout(() => Bat.onMove(bat), 1000 / NATIVE_FRAMERATE)
     }
 
     private findTarget(): PathTarget { // TODO move to nearby drilling noise, explosions or sonic blasters

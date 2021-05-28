@@ -14,12 +14,14 @@ export class GameResult {
     numBuildings: number
     numRaiders: number
     numMaxRaiders: number
+    gameTimeSeconds: number
 
     constructor(state: GameResultState, entityMgr: EntityManager) {
         this.state = state
         this.numBuildings = entityMgr.buildings.length
         this.numRaiders = entityMgr.raiders.length
         this.numMaxRaiders = entityMgr.getMaxRaiders()
+        this.gameTimeSeconds = Math.round(entityMgr.elapsedGameTimeMs / 1000)
     }
 
 }

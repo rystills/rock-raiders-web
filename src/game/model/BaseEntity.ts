@@ -119,4 +119,16 @@ export abstract class BaseEntity {
     getSpeed(): number {
         return this.animation?.transcoef || 1
     }
+
+    update(elapsedMs: number) {
+    }
+
+    onPause() {
+        this.animation?.pause()
+    }
+
+    onUnPause() {
+        this.animation?.unPause()
+    }
+
 }

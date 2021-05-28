@@ -3,7 +3,7 @@ import { Sample } from '../audio/Sample'
 import { LevelEntryCfg } from '../cfg/LevelsCfg'
 import { NerpParser } from '../core/NerpParser'
 import { NerpRunner } from '../core/NerpRunner'
-import { clearIntervalSafe } from '../core/Util'
+import { PausableInterval, setPausableInterval } from '../core/PausableInterval'
 import { EventBus } from '../event/EventBus'
 import { EventKey } from '../event/EventKeyEnum'
 import { AirLevelChanged, RaidersChangedEvent } from '../event/LocalEvents'
@@ -24,8 +24,8 @@ export class WorldManager {
     sceneMgr: SceneManager // TODO can be removed, when entities are decoupled from their scene mesh/entity
     entityMgr: EntityManager
     nerpRunner: NerpRunner = null
-    oxygenUpdateInterval = null
-    spawnRaiderInterval = null
+    oxygenUpdateInterval: PausableInterval = null
+    spawnRaiderInterval: PausableInterval = null
     oxygenRate: number = 0
 
     constructor() {
@@ -34,8 +34,18 @@ export class WorldManager {
         })
         EventBus.registerEventListener(EventKey.REQUESTED_RAIDERS_CHANGED, () => {
             if (GameState.requestedRaiders > 0 && !this.spawnRaiderInterval) {
-                this.spawnRaiderInterval = setInterval(this.checkSpawnRaiders.bind(this), CHECK_SPAWN_RAIDER_TIMER)
+                this.spawnRaiderInterval = setPausableInterval(this.checkSpawnRaiders.bind(this), CHECK_SPAWN_RAIDER_TIMER)
             }
+        })
+        EventBus.registerEventListener(EventKey.PAUSE_GAME, () => {
+            this.nerpRunner?.pauseExecution()
+            this.oxygenUpdateInterval?.pause()
+            this.spawnRaiderInterval?.pause()
+        })
+        EventBus.registerEventListener(EventKey.UNPAUSE_GAME, () => {
+            this.nerpRunner?.startExecution()
+            this.oxygenUpdateInterval?.unPause()
+            this.spawnRaiderInterval?.unPause()
         })
     }
 
@@ -50,14 +60,12 @@ export class WorldManager {
 
     start() {
         this.nerpRunner?.startExecution()
-        this.oxygenUpdateInterval = setInterval(this.updateOxygen.bind(this), UPDATE_OXYGEN_TIMER)
-        GameState.levelStartTime = Date.now()
+        this.oxygenUpdateInterval = setPausableInterval(this.updateOxygen.bind(this), UPDATE_OXYGEN_TIMER)
     }
 
     stop() {
-        GameState.levelStopTime = Date.now()
-        this.spawnRaiderInterval = clearIntervalSafe(this.spawnRaiderInterval)
-        this.oxygenUpdateInterval = clearIntervalSafe(this.oxygenUpdateInterval)
+        this.spawnRaiderInterval?.pause()
+        this.oxygenUpdateInterval?.pause()
         this.nerpRunner?.pauseExecution()
     }
 
@@ -76,7 +84,7 @@ export class WorldManager {
 
     checkSpawnRaiders() {
         if (GameState.requestedRaiders < 1) {
-            this.spawnRaiderInterval = clearIntervalSafe(this.spawnRaiderInterval)
+            this.spawnRaiderInterval?.pause()
             return
         }
         if (this.entityMgr.hasMaxRaiders()) return

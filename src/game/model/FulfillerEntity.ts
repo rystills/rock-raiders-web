@@ -1,6 +1,6 @@
 import { PositionalAudio, Vector2 } from 'three'
 import { Sample } from '../../audio/Sample'
-import { clearIntervalSafe } from '../../core/Util'
+import { PausableInterval, setPausableInterval } from '../../core/PausableInterval'
 import { NATIVE_FRAMERATE } from '../../params'
 import { BeamUpAnimator } from '../BeamUpAnimator'
 import { EntityManager } from '../EntityManager'
@@ -20,7 +20,7 @@ export abstract class FulfillerEntity extends MovableEntity implements Selectabl
 
     level: number = 0
     selected: boolean
-    workInterval = null
+    workInterval: PausableInterval = null
     job: Job = null
     followUpJob: Job = null
     carries: MaterialEntity = null
@@ -30,7 +30,7 @@ export abstract class FulfillerEntity extends MovableEntity implements Selectabl
 
     protected constructor(sceneMgr: SceneManager, entityMgr: EntityManager, entityType: EntityType, aeFilename: string) {
         super(sceneMgr, entityMgr, entityType, aeFilename)
-        this.workInterval = setInterval(this.work.bind(this), 1000 / NATIVE_FRAMERATE) // TODO do not use interval, make work trigger itself (with timeout/interval) until work is done
+        this.workInterval = setPausableInterval(this.work.bind(this), 1000 / NATIVE_FRAMERATE)
     }
 
     abstract get stats()
@@ -97,7 +97,7 @@ export abstract class FulfillerEntity extends MovableEntity implements Selectabl
 
     removeFromScene() {
         super.removeFromScene()
-        this.workInterval = clearIntervalSafe(this.workInterval)
+        this.workInterval?.pause()
     }
 
     beamUp() {
@@ -158,6 +158,21 @@ export abstract class FulfillerEntity extends MovableEntity implements Selectabl
 
     canDrill(surface: Surface): boolean {
         return (this.stats[surface.surfaceType.statsDrillName]?.[this.level] || 0) > 0
+    }
+
+    update(elapsedMs: number) {
+        super.update(elapsedMs)
+        this.beamUpAnimator?.update(elapsedMs)
+    }
+
+    onPause() {
+        super.onPause()
+        this.workInterval?.pause()
+    }
+
+    onUnPause() {
+        super.onUnPause()
+        this.workInterval?.unPause()
     }
 
 }

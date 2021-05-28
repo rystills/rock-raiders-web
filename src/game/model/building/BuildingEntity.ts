@@ -297,4 +297,9 @@ export abstract class BuildingEntity extends BaseEntity implements Selectable {
         return this.entityType === RaiderTrainingSites[training] && this.isUsable() && this.stats[RaiderTrainingStatsProperty[training]][this.level]
     }
 
+    update(elapsedMs: number) {
+        super.update(elapsedMs)
+        this.beamUpAnimator?.update(elapsedMs)
+    }
+
 }

@@ -54,4 +54,7 @@ export enum EventKey {
     PLAY_SOUND,
     UPDATE_RADAR_SURFACE,
     UPDATE_RADAR_TERRAIN,
+    PAUSE_GAME,
+    UNPAUSE_GAME,
+
 }

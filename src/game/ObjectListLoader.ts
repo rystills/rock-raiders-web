@@ -69,13 +69,11 @@ export class ObjectListLoader {
                 spider.changeActivity()
                 spider.addToScene(worldPos, radHeading)
                 entityMgr.spiders.push(spider)
-                spider.startMoving()
             } else if (entityType === EntityType.BAT) {
                 const bat = new Bat(sceneMgr, entityMgr)
                 bat.changeActivity()
                 bat.addToScene(worldPos, radHeading)
                 entityMgr.bats.push(bat)
-                bat.startRandomMove()
             } else if (entityType === EntityType.SMALL_DIGGER) {
                 const smallDigger = new SmallDigger(sceneMgr, entityMgr)
                 smallDigger.changeActivity()

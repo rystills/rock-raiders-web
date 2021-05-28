@@ -1,11 +1,11 @@
 import { DoubleSide, MeshPhongMaterial, Texture } from 'three'
-import { clearIntervalSafe } from '../core/Util'
+import { PausableInterval, setPausableInterval } from '../core/PausableInterval'
 import { SEQUENCE_TEXTURE_FRAMERATE } from '../params'
 
 export class SequenceTextureMaterial extends MeshPhongMaterial {
 
     textures: Texture[] = []
-    sequenceInterval = null
+    sequenceInterval: PausableInterval = null
 
     constructor(name: string) {
         super({
@@ -24,16 +24,16 @@ export class SequenceTextureMaterial extends MeshPhongMaterial {
 
     dispose() {
         super.dispose()
-        this.sequenceInterval = clearIntervalSafe(this.sequenceInterval)
+        this.sequenceInterval?.pause()
     }
 
     setTextures(textures: Texture[]) {
         this.textures = textures
-        this.sequenceInterval = clearIntervalSafe(this.sequenceInterval)
+        this.sequenceInterval?.pause()
         if (textures.length < 1) return
         if (textures.length > 1) {
             let seqNum = 0
-            this.sequenceInterval = setInterval(() => {
+            this.sequenceInterval = setPausableInterval(() => {
                 this.map = textures[seqNum++]
                 if (seqNum >= textures.length) seqNum = 0
             }, 1000 / SEQUENCE_TEXTURE_FRAMERATE)

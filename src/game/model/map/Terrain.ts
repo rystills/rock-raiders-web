@@ -1,4 +1,6 @@
 import { AxesHelper, Group, Vector2, Vector3 } from 'three'
+import { EventBus } from '../../../event/EventBus'
+import { EventKey } from '../../../event/EventKeyEnum'
 import { DEV_MODE, TILESIZE } from '../../../params'
 import { EntityManager } from '../../EntityManager'
 import { SceneManager } from '../../SceneManager'
@@ -34,6 +36,18 @@ export class Terrain {
         this.roofGroup.scale.setScalar(TILESIZE)
         this.roofGroup.visible = false // keep roof hidden unless switched to other camera
         if (DEV_MODE) this.floorGroup.add(new AxesHelper())
+        EventBus.registerEventListener(EventKey.PAUSE_GAME, () => {
+            this.forEachSurface((s) => {
+                s.fallinTimeout?.pause()
+                s.fallinGrp?.animation?.pause()
+            })
+        })
+        EventBus.registerEventListener(EventKey.UNPAUSE_GAME, () => {
+            this.forEachSurface((s) => {
+                s.fallinTimeout?.unPause()
+                s.fallinGrp?.animation?.unPause()
+            })
+        })
     }
 
     getSurfaceFromWorld(worldPosition: Vector3): Surface | null {

@@ -1,7 +1,8 @@
 import { MathUtils, Mesh, MeshPhongMaterial, PositionalAudio, Raycaster, Vector2, Vector3 } from 'three'
 import { Sample } from '../../../audio/Sample'
 import { SoundManager } from '../../../audio/SoundManager'
-import { clearTimeoutSafe, getRandom, getRandomSign } from '../../../core/Util'
+import { PausableTimeout, setPausableTimeout } from '../../../core/PausableTimeout'
+import { getRandom, getRandomSign } from '../../../core/Util'
 import { EventBus } from '../../../event/EventBus'
 import { SelectionChanged, UpdateRadarSurface } from '../../../event/LocalEvents'
 import { CavernDiscovered, JobCreateEvent, JobDeleteEvent, OreFoundEvent } from '../../../event/WorldEvents'
@@ -49,7 +50,7 @@ export class Surface implements Selectable {
     clearRubbleJob: ClearRubbleJob = null
     surfaceRotation: number = 0
     seamLevel: number = 0
-    fallinTimeout = null
+    fallinTimeout: PausableTimeout = null
 
     fallinGrp: AnimationGroup = null
 
@@ -168,7 +169,7 @@ export class Surface implements Selectable {
 
     collapse() {
         this.cancelJobs()
-        this.fallinTimeout = clearTimeoutSafe(this.fallinTimeout)
+        this.fallinTimeout?.pause()
         this.surfaceType = SurfaceType.RUBBLE4
         EventBus.publishEvent(new UpdateRadarSurface(this))
         this.rubblePositions = [this.getRandomPosition(), this.getRandomPosition(), this.getRandomPosition(), this.getRandomPosition()]
@@ -489,7 +490,7 @@ export class Surface implements Selectable {
     reinforce() {
         this.reinforced = true
         this.cancelReinforceJobs()
-        this.fallinTimeout = clearTimeoutSafe(this.fallinTimeout)
+        this.fallinTimeout?.pause()
         this.updateTexture()
         EventBus.publishEvent(new UpdateRadarSurface(this))
     }
@@ -524,7 +525,7 @@ export class Surface implements Selectable {
     }
 
     scheduleFallin(targetX: number, targetY: number) {
-        this.fallinTimeout = setTimeout(() => {
+        this.fallinTimeout = setPausableTimeout(() => {
             this.createFallin(targetX, targetY)
             this.scheduleFallin(targetX, targetY)
         }, (30 + getRandom(60)) * 1000) // TODO adapt timer to level multiplier and fallin value
@@ -546,7 +547,7 @@ export class Surface implements Selectable {
     }
 
     dispose() {
-        this.fallinTimeout = clearTimeoutSafe(this.fallinTimeout)
+        this.fallinTimeout?.pause()
         this.forEachMaterial(m => m.dispose())
         this.mesh?.geometry?.dispose()
     }

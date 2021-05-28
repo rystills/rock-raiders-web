@@ -9,7 +9,8 @@ import { EntityManager } from '../game/EntityManager'
 import { EntityType } from '../game/model/EntityType'
 import { GameResultState } from '../game/model/GameResult'
 import { GameState } from '../game/model/GameState'
-import { clearIntervalSafe, getRandom } from './Util'
+import { PausableInterval, setPausableInterval } from './PausableInterval'
+import { getRandom } from './Util'
 
 // noinspection JSUnusedGlobalSymbols,JSUnusedLocalSymbols
 export class NerpRunner {
@@ -17,7 +18,7 @@ export class NerpRunner {
     entityMgr: EntityManager
     debug = false
     onLevelEnd: (state: GameResultState) => any = null
-    nerpInterval: NodeJS.Timeout = null
+    nerpInterval: PausableInterval = null
 
     registers = new Array(8).fill(0)
     timers = new Array(4).fill(0)
@@ -37,14 +38,11 @@ export class NerpRunner {
     }
 
     startExecution() {
-        const that = this
-        this.nerpInterval = setInterval(() => {
-            that.execute()
-        }, 2000)
+        this.nerpInterval = setPausableInterval(this.execute.bind(this), 2000)
     }
 
     pauseExecution() {
-        this.nerpInterval = clearIntervalSafe(this.nerpInterval)
+        this.nerpInterval?.pause()
     }
 
     /**
