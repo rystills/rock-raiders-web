@@ -23,7 +23,6 @@ export class SceneManager {
 
     static meshRegistry: SceneMesh[] = []
 
-    worldMgr: WorldManager
     entityMgr: EntityManager
     maxFps: number = 30 // most animations use 25 fps so this should be enough
     renderer: WebGLRenderer
@@ -191,7 +190,7 @@ export class SceneManager {
         this.cursorTorchlight.distance *= TILESIZE
         this.scene.add(this.cursorTorchlight)
 
-        this.buildMarker = new BuildPlacementMarker(this.worldMgr, this, this.entityMgr)
+        this.buildMarker = new BuildPlacementMarker(worldMgr, this, this.entityMgr)
         this.scene.add(this.buildMarker.group)
         this.setBuildModeSelection(null)
 

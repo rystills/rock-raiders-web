@@ -84,16 +84,16 @@ export class Terrain {
         return Terrain.findPath(start, target, this.cachedWalkPaths, this.graphWalk, 3 / TILESIZE, 0.25)
     }
 
-    findDrivePath(start: Vector2, target: PathTarget): TerrainPath {
-        return Terrain.findPath(start, target, this.cachedDrivePaths, this.graphDrive, 1 / TILESIZE, 0)
-    }
-
-    findFlyPath(start: Vector2, target: PathTarget): TerrainPath {
-        return Terrain.findPath(start, target, this.cachedFlyPaths, this.graphFly, 1 / TILESIZE, 0)
-    }
-
-    findSwimPath(start: Vector2, target: PathTarget): TerrainPath {
-        return Terrain.findPath(start, target, this.cachedSwimPaths, this.graphSwim, 1 / TILESIZE, 0)
+    findVehiclePath(start: Vector2, target: PathTarget, crossLand: boolean, crossWater: boolean, crossLava: boolean) {
+        if (crossLand && crossWater && crossLava) {
+            return Terrain.findPath(start, target, this.cachedFlyPaths, this.graphFly, 1 / TILESIZE, 0)
+        } else if (crossLand && !crossWater && !crossLava) {
+            return Terrain.findPath(start, target, this.cachedDrivePaths, this.graphDrive, 1 / TILESIZE, 0)
+        } else if (!crossLand && crossWater && !crossLava) {
+            return Terrain.findPath(start, target, this.cachedSwimPaths, this.graphSwim, 1 / TILESIZE, 0)
+        } else {
+            throw 'Unexpected vehicle path finding setting: ' + crossLand + ', ' + crossWater + ', ' + crossLava
+        }
     }
 
     private static findPath(start: Vector2, target: PathTarget, cachedPaths: Map<string, Vector2[]>, graph: Graph, gridScale: number, maxRandomOffset: number): TerrainPath {

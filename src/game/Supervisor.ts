@@ -16,9 +16,11 @@ import { TrainRaiderJob } from './model/job/raider/TrainRaiderJob'
 import { ShareableJob } from './model/job/ShareableJob'
 import { Raider } from './model/raider/Raider'
 import { SceneManager } from './SceneManager'
+import { WorldManager } from './WorldManager'
 
 export class Supervisor {
 
+    worldMgr: WorldManager
     sceneMgr: SceneManager
     entityMgr: EntityManager
     jobs: ShareableJob[] = []
@@ -27,7 +29,8 @@ export class Supervisor {
     priorityIndexList: PriorityIdentifier[] = []
     priorityList: PriorityEntry[] = []
 
-    constructor(sceneMgr: SceneManager, entityMgr: EntityManager) {
+    constructor(worldMgr: WorldManager, sceneMgr: SceneManager, entityMgr: EntityManager) {
+        this.worldMgr = worldMgr
         this.sceneMgr = sceneMgr
         this.entityMgr = entityMgr
         EventBus.registerEventListener(EventKey.JOB_CREATE, (event: JobCreateEvent) => {

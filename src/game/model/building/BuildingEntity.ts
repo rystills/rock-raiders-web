@@ -13,6 +13,7 @@ import { AnimEntityActivity } from '../activities/AnimEntityActivity'
 import { BuildingActivity } from '../activities/BuildingActivity'
 import { RaiderActivity } from '../activities/RaiderActivity'
 import { BaseEntity } from '../BaseEntity'
+import { EntityParameter } from '../EntityParameter'
 import { EntityType } from '../EntityType'
 import { GameState } from '../GameState'
 import { Surface } from '../map/Surface'
@@ -28,14 +29,21 @@ import { Selectable } from '../Selectable'
 import { BuildingPathTarget } from './BuildingPathTarget'
 import { BuildingSite } from './BuildingSite'
 
-export abstract class BuildingEntity extends BaseEntity implements Selectable {
+export class BuildingParameter extends EntityParameter<BuildingEntityStats> {
 
     blocksPathSurface: boolean = true
     secondaryBuildingPart: Vector2 = null
     primaryPowerPath: Vector2 = new Vector2(0, 1)
     secondaryPowerPath: Vector2 = null
     waterPathSurface: Vector2 = null
+    dropAction: RaiderActivity = RaiderActivity.Place
+    unpoweredDefaultActivity: BuildingActivity = BuildingActivity.Stand
 
+}
+
+export class BuildingEntity extends BaseEntity implements Selectable {
+
+    params: BuildingParameter
     level: number = 0
     selected: boolean
     powerSwitch: boolean = true
@@ -52,8 +60,9 @@ export abstract class BuildingEntity extends BaseEntity implements Selectable {
     pathTarget: BuildingPathTarget = null
     engineSound: PositionalAudio
 
-    protected constructor(sceneMgr: SceneManager, entityMgr: EntityManager, entityType: EntityType, aeFilename: string) {
-        super(sceneMgr, entityMgr, entityType, aeFilename)
+    constructor(sceneMgr: SceneManager, entityMgr: EntityManager, params: BuildingParameter) {
+        super(sceneMgr, entityMgr, params.entityType, params.aeFilename)
+        this.params = params
         this.sceneEntity.flipXAxis()
         this.upgradeCostOre = ResourceManager.cfg('Main', 'BuildingUpgradeCostOre')
         this.upgradeCostBrick = ResourceManager.cfg('Main', 'BuildingUpgradeCostStuds')
@@ -62,7 +71,9 @@ export abstract class BuildingEntity extends BaseEntity implements Selectable {
         })
     }
 
-    abstract get stats(): BuildingEntityStats
+    get stats(): BuildingEntityStats {
+        return this.params.stats
+    }
 
     isSelectable(): boolean {
         return !this.selected && !this.inBeam
@@ -137,7 +148,7 @@ export abstract class BuildingEntity extends BaseEntity implements Selectable {
     }
 
     getDefaultActivity(): BuildingActivity {
-        return !this.isPowered() ? BuildingActivity.Unpowered : AnimEntityActivity.Stand
+        return !this.isPowered() ? this.params.unpoweredDefaultActivity : AnimEntityActivity.Stand
     }
 
     beamUp() {
@@ -238,14 +249,14 @@ export abstract class BuildingEntity extends BaseEntity implements Selectable {
     placeDown(worldPosition: Vector2, radHeading: number, disableTeleportIn: boolean) {
         this.primarySurface = this.sceneMgr.terrain.getSurfaceFromWorld2D(worldPosition)
         this.primarySurface.setBuilding(this)
-        if (this.secondaryBuildingPart) {
-            const secondaryOffset = new Vector2(TILESIZE * this.secondaryBuildingPart.x, TILESIZE * this.secondaryBuildingPart.y)
+        if (this.params.secondaryBuildingPart) {
+            const secondaryOffset = this.params.secondaryBuildingPart.clone().multiplyScalar(TILESIZE)
                 .rotateAround(new Vector2(0, 0), -radHeading).add(worldPosition)
             this.secondarySurface = this.sceneMgr.terrain.getSurfaceFromWorld2D(secondaryOffset)
             this.secondarySurface.setBuilding(this)
         }
-        if (this.primaryPowerPath) {
-            const pathOffset = new Vector2(this.primaryPowerPath.x, this.primaryPowerPath.y).multiplyScalar(TILESIZE)
+        if (this.params.primaryPowerPath) {
+            const pathOffset = this.params.primaryPowerPath.clone().multiplyScalar(TILESIZE)
                 .rotateAround(new Vector2(0, 0), -radHeading).add(worldPosition)
             this.primaryPathSurface = this.sceneMgr.terrain.getSurfaceFromWorld2D(pathOffset)
             this.primaryPathSurface.setSurfaceType(SurfaceType.POWER_PATH_BUILDING)
@@ -273,10 +284,6 @@ export abstract class BuildingEntity extends BaseEntity implements Selectable {
         this.changeActivity()
         this.updatePowerState()
         EventBus.publishEvent(new BuildingsChangedEvent(this.entityMgr))
-    }
-
-    getDropAction(): RaiderActivity {
-        return RaiderActivity.Place
     }
 
     getTrainingTargets() {

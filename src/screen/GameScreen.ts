@@ -42,7 +42,6 @@ export class GameScreen extends BaseScreen {
         this.entityMgr = new EntityManager()
         this.worldMgr = new WorldManager()
         this.sceneMgr = new SceneManager(this.gameLayer.canvas)
-        this.sceneMgr.worldMgr = this.worldMgr
         this.sceneMgr.entityMgr = this.entityMgr
         this.worldMgr.sceneMgr = this.sceneMgr
         this.worldMgr.entityMgr = this.entityMgr
@@ -57,7 +56,7 @@ export class GameScreen extends BaseScreen {
         this.selectionLayer.entityMgr = this.entityMgr
         this.guiLayer.entityMgr = this.entityMgr
         this.overlayLayer.entityMgr = this.entityMgr
-        this.jobSupervisor = new Supervisor(this.sceneMgr, this.entityMgr)
+        this.jobSupervisor = new Supervisor(this.worldMgr, this.sceneMgr, this.entityMgr)
         this.guiMgr = new GuiManager(this.worldMgr, this.sceneMgr, this.entityMgr, this.jobSupervisor, this.gameLayer.canvas)
         // link layer
         this.guiLayer.onOptionsShow = () => this.overlayLayer.showOptions()

@@ -1,44 +1,54 @@
 import { PositionalAudio, Vector2 } from 'three'
+import { VehicleEntityStats } from '../../../cfg/VehicleEntityStats'
 import { EventBus } from '../../../event/EventBus'
 import { SelectionChanged, VehiclesChangedEvent } from '../../../event/LocalEvents'
 import { EntityManager } from '../../EntityManager'
 import { SceneManager } from '../../SceneManager'
 import { AnimEntityActivity } from '../activities/AnimEntityActivity'
 import { RaiderActivity } from '../activities/RaiderActivity'
-import { EntityType } from '../EntityType'
+import { EntityParameter } from '../EntityParameter'
 import { FulfillerEntity } from '../FulfillerEntity'
 import { Job } from '../job/Job'
 import { VehicleCallManJob } from '../job/VehicleCallManJob'
 import { TerrainPath } from '../map/TerrainPath'
 import { Crystal } from '../material/Crystal'
-import { Ore } from '../material/Ore'
 import { PathTarget } from '../PathTarget'
 import { Raider } from '../raider/Raider'
 import { RaiderTraining } from '../raider/RaiderTraining'
 import { VehicleActivity } from './VehicleActivity'
 
-export abstract class VehicleEntity extends FulfillerEntity {
+export class VehicleParameter extends EntityParameter<VehicleEntityStats> {
 
+    driverActivity: RaiderActivity = null
+    driverTraining: RaiderTraining = RaiderTraining.DRIVER
+
+}
+
+export class VehicleEntity extends FulfillerEntity {
+
+    params: VehicleParameter
     driver: Raider = null
     callManJob: VehicleCallManJob = null
     engineSound: PositionalAudio
 
-    protected constructor(sceneMgr: SceneManager, entityMgr: EntityManager, entityType: EntityType, aeFilename: string) {
-        super(sceneMgr, entityMgr, entityType, aeFilename)
+    constructor(sceneMgr: SceneManager, entityMgr: EntityManager, params: VehicleParameter) {
+        super(sceneMgr, entityMgr, params.entityType, params.aeFilename)
+        this.params = params
         this.sceneEntity.flipXAxis()
     }
 
+    get stats(): VehicleEntityStats {
+        return this.params.stats
+    }
+
     findPathToTarget(target: PathTarget): TerrainPath {
-        return this.sceneMgr.terrain.findDrivePath(this.getPosition2D(), target)
+        return this.sceneMgr.terrain.findVehiclePath(this.getPosition2D(), target, this.stats.CrossLand, this.stats.CrossWater, this.stats.CrossLava)
     }
 
     beamUp() {
         this.dropDriver()
         super.beamUp()
         const surface = this.surfaces[0]
-        for (let c = 0; c < this.stats.CostOre; c++) {
-            this.entityMgr.placeMaterial(new Ore(this.sceneMgr, this.entityMgr), surface.getRandomPosition())
-        }
         for (let c = 0; c < this.stats.CostCrystal; c++) {
             this.entityMgr.placeMaterial(new Crystal(this.sceneMgr, this.entityMgr), surface.getRandomPosition())
         }
@@ -77,11 +87,11 @@ export abstract class VehicleEntity extends FulfillerEntity {
     }
 
     getRequiredTraining(): RaiderTraining {
-        return RaiderTraining.DRIVER
+        return this.params.driverTraining
     }
 
     getDriverActivity(): RaiderActivity {
-        return RaiderActivity.Stand
+        return this.params.driverActivity
     }
 
     addToScene(worldPosition: Vector2, radHeading: number) {

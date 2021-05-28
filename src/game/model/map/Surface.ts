@@ -10,6 +10,7 @@ import { HEIGHT_MULTIPLIER, TILESIZE } from '../../../params'
 import { ResourceManager } from '../../../resource/ResourceManager'
 import { EntityManager } from '../../EntityManager'
 import { SceneManager } from '../../SceneManager'
+import { WorldManager } from '../../WorldManager'
 import { AnimationGroup } from '../anim/AnimationGroup'
 import { BuildingEntity } from '../building/BuildingEntity'
 import { BuildingSite } from '../building/BuildingSite'
@@ -466,7 +467,7 @@ export class Surface implements Selectable {
     }
 
     isWalkable(): boolean {
-        return this.surfaceType.floor && this.discovered && this.surfaceType !== SurfaceType.LAVA && this.surfaceType !== SurfaceType.WATER && !this.building?.blocksPathSurface
+        return this.surfaceType.floor && this.discovered && this.surfaceType !== SurfaceType.LAVA && this.surfaceType !== SurfaceType.WATER && !this.building?.params.blocksPathSurface
     }
 
     isDigable(): boolean {
@@ -598,7 +599,7 @@ export class Surface implements Selectable {
     }
 
     getPathFindingFlyWeight(): number {
-        return this.surfaceType.floor && !this.building?.blocksPathSurface ? 1 : 0
+        return this.surfaceType.floor && !this.building?.params.blocksPathSurface ? 1 : 0
     }
 
     getPathFindingSwimWeight(): number {

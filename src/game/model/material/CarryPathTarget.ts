@@ -101,7 +101,7 @@ export class BuildingCarryPathTarget extends CarryPathTarget {
     }
 
     getDropAction(): RaiderActivity {
-        return this.building.getDropAction()
+        return this.building.params.dropAction
     }
 
     isInvalid(): boolean {
