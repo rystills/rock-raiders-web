@@ -33,7 +33,8 @@ export abstract class DependencyCheckPanel extends IconSubPanel {
         const item = super.addMenuItem('InterfaceBuildImages', itemKey)
         // TODO when update state also update tooltip icons showing missing dependencies
         const dependencies: [string, number][] = GuiResourceCache.cfg('Dependencies', 'AlwaysCheck:' + itemKey)
-        item.isDisabled = () => dependencies.some((d) => !this.checkDependency(d))
+        // item.isDisabled = () => dependencies.some((d) => !this.checkDependency(d))
+        item.isDisabled = () => false
         return item
     }
 

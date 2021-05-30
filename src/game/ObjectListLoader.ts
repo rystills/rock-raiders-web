@@ -15,7 +15,9 @@ import { LavaMonster } from './model/monster/LavaMonster'
 import { RockMonster } from './model/monster/RockMonster'
 import { SmallSpider } from './model/monster/SmallSpider'
 import { Raider } from './model/raider/Raider'
+import { RaiderTraining } from './model/raider/RaiderTraining'
 import { SmallDigger } from './model/vehicle/entities/SmallDigger'
+import { VehicleFactory } from './model/vehicle/VehicleFactory'
 import { SceneManager } from './SceneManager'
 import { WorldManager } from './WorldManager'
 import degToRad = MathUtils.degToRad
@@ -53,6 +55,28 @@ export class ObjectListLoader {
                 console.log(olObject.type + ' heading: ' + Math.round(olObject.heading % 360))
                 const entity = BuildingFactory.createBuildingFromType(entityType, sceneMgr, entityMgr)
                 entity.placeDown(worldPos, -radHeading - Math.PI, levelConf.disableStartTeleport)
+                if (entityType === EntityType.TOOLSTATION) {
+                    const raider = new Raider(sceneMgr, entityMgr)
+                    raider.addTraining(RaiderTraining.DRIVER)
+                    raider.addTraining(RaiderTraining.PILOT)
+                    raider.sceneEntity.changeActivity()
+                    raider.sceneEntity.createPickSphere(raider.stats.PickSphere, raider)
+                    raider.sceneEntity.addToScene(entity.primaryPathSurface.getCenterWorld2D(), radHeading - Math.PI / 2)
+                    entityMgr.raiders.push(raider)
+                    EventBus.publishEvent(new RaidersChangedEvent(entityMgr))
+                } else if (entityType === EntityType.POWER_STATION) {
+                    const smallHeli = VehicleFactory.createVehicleFromType(EntityType.SMALL_HELI, sceneMgr, entityMgr)
+                    smallHeli.sceneEntity.changeActivity()
+                    smallHeli.sceneEntity.createPickSphere(smallHeli.stats.PickSphere, smallHeli)
+                    smallHeli.sceneEntity.addToScene(entity.primaryPathSurface.getCenterWorld2D(), radHeading + Math.PI)
+                    entityMgr.vehicles.push(smallHeli)
+                } else if (entityType === EntityType.TELEPORT_PAD) {
+                    const walker = VehicleFactory.createVehicleFromType(EntityType.WALKER_DIGGER, sceneMgr, entityMgr)
+                    walker.sceneEntity.changeActivity()
+                    walker.sceneEntity.createPickSphere(walker.stats.PickSphere, walker)
+                    walker.sceneEntity.addToScene(entity.primaryPathSurface.getCenterWorld2D(), radHeading + Math.PI)
+                    entityMgr.vehicles.push(walker)
+                }
             } else if (entityType === EntityType.CRYSTAL) {
                 entityMgr.placeMaterial(new Crystal(sceneMgr, entityMgr), worldPos)
             } else if (entityType === EntityType.SMALL_SPIDER) {
@@ -95,6 +119,8 @@ export class ObjectListLoader {
                 console.warn('Object type ' + olObject.type + ' not yet implemented')
             }
         })
+        const entity = BuildingFactory.createBuildingFromType(EntityType.TELEPORT_BIG, sceneMgr, entityMgr)
+        entity.placeDown(new Vector2(24.5, 48.5).multiplyScalar(TILESIZE), Math.PI, levelConf.disableStartTeleport)
     }
 
 }
