@@ -2,7 +2,7 @@ import { EventBus } from '../event/EventBus'
 import { EventKey } from '../event/EventKeyEnum'
 import { CameraControl, ChangeBuildingPowerState, ChangePriorityList, ChangeRaiderSpawnRequest, RequestVehicleSpawn, SelectBuildMode, SelectedRaiderPickTool, TrainRaider } from '../event/GuiCommand'
 import { DeselectAll, UpdatePriorities } from '../event/LocalEvents'
-import { JobCreateEvent, RequestedRaidersChanged } from '../event/WorldEvents'
+import { JobCreateEvent, RequestedRaidersChanged, RequestedVehiclesChanged } from '../event/WorldEvents'
 import { EntityManager } from './EntityManager'
 import { BuildingFactory } from './model/building/BuildingFactory'
 import { PowerPathBuildingSite } from './model/building/PowerPathBuildingSite'
@@ -12,8 +12,6 @@ import { GetToolJob } from './model/job/raider/GetToolJob'
 import { TrainRaiderJob } from './model/job/raider/TrainRaiderJob'
 import { UpgradeRaiderJob } from './model/job/raider/UpgradeRaiderJob'
 import { VehicleCallManJob } from './model/job/VehicleCallManJob'
-import { VehicleActivity } from './model/vehicle/VehicleActivity'
-import { VehicleFactory } from './model/vehicle/VehicleFactory'
 import { SceneManager } from './SceneManager'
 import { WorldManager } from './WorldManager'
 
@@ -113,21 +111,7 @@ export class GuiManager {
             entityMgr.selection.surface.site?.cancelSite()
         })
         EventBus.registerEventListener(EventKey.COMMAND_REQUEST_VEHICLE_SPAWN, (event: RequestVehicleSpawn) => {
-            console.log('Vehicle spawn requested for: ' + EntityType[event.vehicle])
-            // TODO vehicles: manage amount of requested vehicles per type in entity manager
-            const pads = entityMgr.getBuildingsByType(EntityType.TELEPORT_PAD).filter((b) => !b.teleport.operating) // TODO check for "correct" teleport station
-            if (pads.length > 0) {
-                const teleportPad = pads.random()
-                const vehicle = VehicleFactory.createVehicleFromType(event.vehicle, sceneMgr, entityMgr)
-                vehicle.sceneEntity.addToScene(teleportPad.primaryPathSurface.getCenterWorld2D(), teleportPad.sceneEntity.getHeading())
-                vehicle.sceneEntity.changeActivity(VehicleActivity.TeleportIn, () => {
-                    vehicle.sceneEntity.changeActivity()
-                    vehicle.sceneEntity.createPickSphere(vehicle.stats.PickSphere, vehicle)
-                    entityMgr.vehicles.push(vehicle)
-                })
-            }
-            // TODO check for crystals amount and reduce it
-            // TODO otherwise start a check interval?
+            EventBus.publishEvent(new RequestedVehiclesChanged(event.vehicle, event.offset))
             EventBus.publishEvent(new DeselectAll())
         })
         EventBus.registerEventListener(EventKey.COMMAND_VEHICLE_GET_MAN, () => {

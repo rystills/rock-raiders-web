@@ -205,10 +205,12 @@ export class CancelBuilding extends GuiCommand {
 export class RequestVehicleSpawn extends GuiCommand {
 
     vehicle: EntityType
+    offset: number
 
-    constructor(vehicle: EntityType) {
+    constructor(vehicle: EntityType, offset: number) {
         super(EventKey.COMMAND_REQUEST_VEHICLE_SPAWN)
         this.vehicle = vehicle
+        this.offset = offset
     }
 
 }

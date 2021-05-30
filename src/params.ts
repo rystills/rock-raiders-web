@@ -3,6 +3,7 @@ export const WAD_CACHE_DB_NAME = 'RockRaidersWeb'
 export const JOB_SCHEDULE_INTERVAL = 1000 // milliseconds
 export const CHECK_CLEAR_RUBBLE_INTERVAL = 5000 // milliseconds
 export const CHECK_SPAWN_RAIDER_TIMER = 1000 // milliseconds
+export const CHECK_SPAWN_VEHICLE_TIMER = 2000 // milliseconds
 export const MAX_RAIDER_BASE = 12
 export const MAX_RAIDER_REQUEST = 9
 export const ADDITIONAL_RAIDER_PER_SUPPORT = 10
