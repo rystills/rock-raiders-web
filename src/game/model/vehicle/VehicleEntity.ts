@@ -95,4 +95,9 @@ export abstract class VehicleEntity extends FulfillerEntity {
         return false // TODO vehicles: get vehicles to work
     }
 
+    update(elapsedMs: number) {
+        super.update(elapsedMs)
+        this.driver?.update(elapsedMs)
+    }
+
 }
