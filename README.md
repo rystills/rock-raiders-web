@@ -42,7 +42,6 @@ update call missing for material entities like barries and crystals
 - Add pricing for vehicles
 - Auto train raider to man vehicles
 - Raider sometimes sitting wrong way around in vehicles
-- Walker digger not loaded correctly or at least the upgrades
 - Make vehicles work
 
 ### Near (v0.6.0)

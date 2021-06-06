@@ -156,8 +156,6 @@ export class AnimEntityLoader {
                 })
             }
 
-            this.applyDefaultUpgrades(animation)
-
             animation.polyModel.scale.setScalar(this.entityType.scale)
             animation.bodies.forEach((body, index) => { // not all bodies may have been added in first iteration
                 const polyPart = animation.polyList[index]
@@ -208,24 +206,6 @@ export class AnimEntityLoader {
                 }
             }
         })
-    }
-
-    private applyDefaultUpgrades(animation: AnimClip) {
-        const upgrades0000 = this.entityType.upgradesByLevel.get('0000')
-        if (upgrades0000) { // TODO check for other upgrade levels
-            upgrades0000.forEach((upgrade) => {
-                const joint = animation.nullJoints.get(upgrade.upgradeNullName.toLowerCase())?.[upgrade.upgradeNullIndex]
-                if (joint) {
-                    const lwoModel = ResourceManager.getLwoModel(upgrade.upgradeFilepath + '.lwo')
-                    if (lwoModel) {
-                        joint.add(lwoModel)
-                    } else {
-                        const upgradeModels = ResourceManager.getAnimationEntityType(upgrade.upgradeFilepath + '/' + upgrade.upgradeFilepath.split('/').last() + '.ae', this.audioListener)
-                        upgradeModels.animations.get('activity_stand')?.bodies.forEach((b) => joint.add(b.model.clone()))
-                    }
-                }
-            })
-        }
     }
 
 }
