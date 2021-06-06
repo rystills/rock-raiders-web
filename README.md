@@ -37,15 +37,14 @@ update call missing for material entities like barries and crystals
 
 ### Vehicles Milestone (v0.5.0)
 
+- Fix raider not shown as driver in tunnel scout
 - Introduce waiting lists for vehicles
 - Add pricing for vehicles
 - Add range checks to jobs, such that raider mount vehicles earlier and place down materials on buildings sites earlier (better check position of material)
-- Remove default driver skill from raiders
 - Auto train raider to man vehicles
-- Make raider unselectable as driver
-- Implement beam up for vehicles
 - Raider sometimes sitting wrong way around in vehicles
 - Walker digger not loaded correctly or at least the upgrades
+- Make vehicles work
 
 ### Near (v0.6.0)
 
