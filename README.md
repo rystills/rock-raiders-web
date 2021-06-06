@@ -20,6 +20,21 @@ Rock Raiders Web is an experiment aimed at recreating Rock Raiders PC game (1999
 
 ## Development Roadmap
 
+FIXME add credits section to README
+
+Bugs in master branch (tested with Frosteinbruch)
+- Mission briefing not shown on start, but space message is shown
+- performance issues
+- Raider cannot pickup dynamite
+- Energy crystals are marked as consumed on start but, buildings are not yet discovered
+- No targets given happens and spams everything
+
+Fix loadAllCursors performance issues
+Refactor Stats classes, turn into EntityType classes
+Make AnimClip clonable (needs split too, because classes mixes state and type of animations)
+Refactor BuildingEntities and VehicleEntities, no actual typing needed
+update call missing for material entities like barries and crystals
+
 ### Vehicles Milestone (v0.5.0)
 
 - Introduce waiting lists for vehicles
