@@ -57,8 +57,8 @@ export abstract class VehicleEntity extends FulfillerEntity {
         this.driver.vehicle = this
         this.driver.sceneEntity.position.set(0, 0, 0)
         this.driver.sceneEntity.setHeading(0)
-        this.driver.sceneEntity.changeActivity(this.getDriverActivity());
-        (this.sceneEntity.animation.driverJoint || this.sceneEntity.group).add(this.driver.sceneEntity.group)
+        this.driver.sceneEntity.changeActivity(this.getDriverActivity())
+        this.sceneEntity.animation.driverJoint?.add(this.driver.sceneEntity.group) // TODO evaluate stats attribute too
         if (this.stats.EngineSound && !this.engineSound) this.engineSound = this.sceneEntity.playPositionalAudio(this.stats.EngineSound, true)
         if (this.selected) EventBus.publishEvent(new SelectionChanged(this.entityMgr))
     }
@@ -66,7 +66,7 @@ export abstract class VehicleEntity extends FulfillerEntity {
     dropDriver() {
         this.stopJob()
         if (!this.driver) return
-        (this.sceneEntity.animation.driverJoint || this.sceneEntity.group).remove(this.driver.sceneEntity.group)
+        this.sceneEntity.animation.driverJoint?.remove(this.driver.sceneEntity.group)
         this.driver.vehicle = null
         this.driver.sceneEntity.position.copy(this.sceneEntity.position)
         this.driver.sceneEntity.setHeading(this.sceneEntity.getHeading())
